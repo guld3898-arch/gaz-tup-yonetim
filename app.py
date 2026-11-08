@@ -134,6 +134,26 @@ def users():
 @app.errorhandler(403)
 def forbidden(_): return render_template('message.html', title='Yetki yok', message='Bu sayfaya erişim yetkiniz bulunmuyor.'),403
 
-with app.app_context(): db.create_all()
+with app.app_context():
+    db.create_all()
+
+    admin_username = os.environ.get('ADMIN_USERNAME')
+    admin_password = os.environ.get('ADMIN_PASSWORD')
+
+    if admin_username and admin_password:
+        existing_admin = User.query.filter_by(
+            username=admin_username
+        ).first()
+
+        if not existing_admin:
+            admin = User(
+                username=admin_username,
+                full_name='Sistem Yöneticisi',
+                role='Yönetici',
+                password_hash=generate_password_hash(admin_password)
+            )
+            db.session.add(admin)
+            db.session.commit()
+            print('İlk yönetici hesabı oluşturuldu.')
 
 if __name__ == '__main__': app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=False)
